@@ -130,9 +130,7 @@ def local_evidence_summary(claim: str, evidence: list[EvidencePassage]) -> Verdi
         verdict=Verdict.unverified,
         confidence=0.2,
         reasoning=(
-            "Relevant verified sources were found, but local fallback mode could not determine "
-            "whether they clearly support or contradict the claim. Configure Bedrock for the full "
-            "evidence-grounded verdict generator."
+            "Relevant verified sources were found, but the claim could itselfcould not be supported"
         ),
         citations=citations,
     )

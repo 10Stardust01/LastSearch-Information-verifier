@@ -1,9 +1,10 @@
+import logging
 from typing import Any
 
 from app.config import Settings
 from app.schemas import EvidencePassage
 
-
+logger = logging.getLogger(__name__)
 SOURCE_TIERS = ["official", "news"]
 
 
@@ -76,11 +77,30 @@ def build_hybrid_query(
                 "rank_window_size": 20,
                 "retriever": {
                     "rrf": {
-                        "window_size": 20,
+                        "rank_window_size": 20,
                         "rank_constant": 60,
                         "retrievers": [bm25_leg, elser_leg],
                     }
                 },
+            }
+        },
+        "_source": ["title", "body", "source_name", "source_url", "published_date"],
+        "size": size,
+    }
+
+
+def build_bm25_query(claim: str, size: int = 5) -> dict[str, Any]:
+    source_filter = [{"terms": {"source_tier": SOURCE_TIERS}}]
+    return {
+        "query": {
+            "bool": {
+                "must": {
+                    "multi_match": {
+                        "query": claim,
+                        "fields": ["title^3", "body"],
+                    }
+                },
+                "filter": source_filter,
             }
         },
         "_source": ["title", "body", "source_name", "source_url", "published_date"],
@@ -113,9 +133,18 @@ class ElasticsearchRetriever:
             jina_reranker_inference_id=self.settings.jina_reranker_inference_id,
             size=size,
         )
-        response = self.client.search(index=self.index, body=query)
-        passages: list[EvidencePassage] = []
 
+        try:
+            response = self.client.search(index=self.index, body=query)
+        except Exception as error:
+            logger.warning(
+                "Hybrid search failed; falling back to BM25-only search: %s",
+                error,
+            )
+            fallback_query = build_bm25_query(claim, size=size)
+            response = self.client.search(index=self.index, body=fallback_query)
+
+        passages: list[EvidencePassage] = []
         for hit in response.get("hits", {}).get("hits", []):
             source = hit["_source"]
             passages.append(EvidencePassage.model_validate(source))

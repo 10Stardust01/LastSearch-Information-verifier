@@ -1,7 +1,13 @@
 from functools import lru_cache
 from os import getenv
+from pathlib import Path
 
 from dataclasses import dataclass
+
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover
+    load_dotenv = None
 
 
 @dataclass(frozen=True)
@@ -17,6 +23,10 @@ class Settings:
 
 @lru_cache
 def get_settings() -> Settings:
+    env_path = Path(__file__).resolve().parent.parent / ".env"
+    if load_dotenv is not None and env_path.exists():
+        load_dotenv(env_path)
+
     return Settings(
         elasticsearch_url=getenv("ELASTICSEARCH_URL", "https://localhost:9200"),
         elasticsearch_api_key=getenv("ELASTICSEARCH_API_KEY"),

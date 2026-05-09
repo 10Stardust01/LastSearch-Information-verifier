@@ -8,7 +8,10 @@ from app.schemas import EvidencePassage, SchemaValidationError, Verdict, Verdict
 SYSTEM_PROMPT = """You are a fact-checking assistant for Bengaluru civic claims.
 Use ONLY the retrieved evidence provided by the user. Do not use prior knowledge.
 Determine whether the claim is SUPPORTED, CONTRADICTED, or UNVERIFIED.
-If the evidence does not clearly address the claim, return UNVERIFIED.
+Use only evidence that directly addresses the claim. Ignore unrelated evidence.
+If evidence establishes a mutually exclusive fact, return CONTRADICTED.
+If the evidence does not clearly address the claim, return UNVERIFIED with low confidence.
+Always cite the evidence passages used for SUPPORTED or CONTRADICTED verdicts.
 Return JSON only, matching this exact shape:
 {
   "verdict": "SUPPORTED | CONTRADICTED | UNVERIFIED",
@@ -56,6 +59,36 @@ def fallback_unverified(reason: str) -> VerdictResponse:
     )
 
 
+def extract_json_object(text: str) -> str:
+    start = text.find("{")
+    if start == -1:
+        raise ValueError("No JSON object found")
+
+    depth = 0
+    in_string = False
+    escape = False
+    for index, character in enumerate(text[start:], start=start):
+        if escape:
+            escape = False
+            continue
+        if character == "\\":
+            escape = True
+            continue
+        if character == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if character == "{":
+            depth += 1
+        elif character == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : index + 1]
+
+    raise ValueError("Unmatched JSON braces")
+
+
 class BedrockVerdictGenerator:
     def __init__(self, settings: Settings):
         try:
@@ -83,4 +116,7 @@ class BedrockVerdictGenerator:
         try:
             return VerdictResponse.model_validate_json(text)
         except (SchemaValidationError, ValueError, json.JSONDecodeError):
-            return fallback_unverified("The model returned malformed or unsupported output.")
+            try:
+                return VerdictResponse.model_validate_json(extract_json_object(text))
+            except (SchemaValidationError, ValueError, json.JSONDecodeError):
+                return fallback_unverified("The model returned malformed or unsupported output.")

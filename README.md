@@ -47,6 +47,8 @@ Run these from Kibana Dev Tools:
 3. Bulk-load `elastic/03_sample_documents.ndjson`
 4. Test with `elastic/04_hybrid_query.json`
 
+The sample corpus includes Bangalore civic announcements for transit, power, water, waste, and local traffic.
+
 ## Import Kibana Dashboard
 
 ```powershell

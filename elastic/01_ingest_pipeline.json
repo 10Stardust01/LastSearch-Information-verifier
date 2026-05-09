@@ -25,6 +25,14 @@ PUT _ingest/pipeline/bengaluru-sources-pipeline
       }
     },
     {
+      "remove": {
+        "description": "Remove blank published dates so the fallback can run",
+        "field": "published_date",
+        "ignore_missing": true,
+        "if": "ctx.published_date != null && ctx.published_date.toString().trim().length() == 0"
+      }
+    },
+    {
       "set": {
         "description": "Fall back to crawl timestamp if no published date exists",
         "field": "published_date",

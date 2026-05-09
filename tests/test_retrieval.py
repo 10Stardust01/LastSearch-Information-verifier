@@ -12,4 +12,4 @@ def test_hybrid_query_filters_to_verified_source_tiers():
 
     assert "'source_tier': ['official', 'news']" in query_text
     assert query["retriever"]["text_similarity_reranker"]["inference_id"] == "jina-reranker-v2"
-    assert query["retriever"]["text_similarity_reranker"]["retriever"]["rrf"]["window_size"] == 20
+    assert query["retriever"]["text_similarity_reranker"]["retriever"]["rrf"]["rank_window_size"] == 20

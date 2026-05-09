@@ -75,6 +75,14 @@ bengaluru-crawler --urls "https://www.bmrcl.co.in/press/2025-05-07-purple-line-b
 bengaluru-crawler --dry-run --urls "https://example.com"
 ```
 
+## Run the Website
+
+```powershell
+bengaluru-web
+```
+
+Then open http://localhost:8000 in your browser.
+
 ## Run MCP Server
 
 ```powershell

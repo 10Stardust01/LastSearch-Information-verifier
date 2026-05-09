@@ -20,6 +20,11 @@ crawler = [
   "pyyaml>=6.0",
   "requests>=2.31.0",
 ]
+web = [
+  "fastapi>=0.110.0",
+  "uvicorn>=0.24.0",
+  "python-multipart>=0.0.6",
+]
 dev = [
   "pytest>=8.0.0",
   "ruff>=0.5.0",
@@ -29,6 +34,7 @@ dev = [
 bengaluru-fact-check = "app.cli:main"
 bengaluru-mcp-server = "mcp_server:main"
 bengaluru-crawler = "crawler:main"
+bengaluru-web = "app.web:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
